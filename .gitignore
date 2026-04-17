@@ -1,0 +1,27 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Rider / Visual Studio
+.idea/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Dalamud dev bits
+*.pdb.zip
+latest.zip

@@ -1,0 +1,15 @@
+{
+  "Author": "XeldarAlz",
+  "Name": "Rota",
+  "Punchline": "Your schedule of duties — tracked and, on demand, done.",
+  "Description": "Rota is a consolidated daily/weekly content tracker and orchestrator for FFXIV. It displays current progress (roulettes, beast tribes, Wondrous Tails, Custom Deliveries, Fashion Report, Jumbo Cactpot, PvP series, hunt marks) and, for each item, can drive other installed plugins — Lifestream, vnavmesh, AutoDuty, Questionable, AutoRetainer, RotationSolver, BossModReborn, PandorasBox, YesAlready, TextAdvance — to complete it. Rota only reads game state directly; automation is handled exclusively via other plugins' IPC.",
+  "ApplicableVersion": "any",
+  "RepoUrl": "https://github.com/XeldarAlz/FFXIVPlugin",
+  "Tags": [
+    "daily",
+    "weekly",
+    "tracker",
+    "orchestrator",
+    "rota"
+  ]
+}
