@@ -47,6 +47,7 @@ public sealed class Plugin : IDalamudPlugin
         Runner = new WorkflowRunner(Framework, Log);
 
         Roulettes.RegisterAll(Objectives, DataManager, ClientState, Log);
+        Objectives.Register(new WondrousTailsObjective(ClientState));
 
         MainWindow = new MainWindow(this);
         WindowSystem.AddWindow(MainWindow);
