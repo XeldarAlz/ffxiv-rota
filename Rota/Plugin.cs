@@ -6,6 +6,7 @@ using Dalamud.Interface.Windowing;
 using Rota.Automation;
 using Rota.Services;
 using Rota.Tracking;
+using Rota.Tracking.Readers;
 using Rota.Windows;
 
 namespace Rota;
@@ -44,6 +45,8 @@ public sealed class Plugin : IDalamudPlugin
         Ipc = new IpcRegistry(PluginInterface, Log);
         Objectives = new ObjectiveRegistry();
         Runner = new WorkflowRunner(Framework, Log);
+
+        Roulettes.RegisterAll(Objectives, DataManager, ClientState, Log);
 
         MainWindow = new MainWindow(this);
         WindowSystem.AddWindow(MainWindow);
