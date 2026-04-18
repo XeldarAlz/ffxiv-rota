@@ -83,7 +83,7 @@ public sealed class WalkToStep : IStep
 
         if (DateTime.UtcNow > _deadline)
         {
-            _vnav.Stop();
+            _vnav.StopPath();
             FailureReason = $"did not arrive at {_destination} within {_timeout.TotalSeconds:0}s";
             State = StepState.Failed;
             return;
@@ -91,13 +91,13 @@ public sealed class WalkToStep : IStep
 
         if (IsWithinArrivalRadius())
         {
-            _vnav.Stop();
+            _vnav.StopPath();
             State = StepState.Completed;
             return;
         }
 
         // If vnav reports it has stopped but we haven't arrived, it couldn't path.
-        if (!_vnav.IsRunning() && !IsWithinArrivalRadius())
+        if (!_vnav.IsPathRunning() && !IsWithinArrivalRadius())
         {
             FailureReason = "vnavmesh stopped before arrival — no path or blocked";
             State = StepState.Failed;
@@ -106,7 +106,7 @@ public sealed class WalkToStep : IStep
 
     public void Cancel()
     {
-        _vnav.Stop();
+        _vnav.StopPath();
         if (State == StepState.Running) State = StepState.Cancelled;
     }
 
