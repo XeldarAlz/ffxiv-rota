@@ -28,6 +28,14 @@ public static class JumboCactpotWorkflow
                 expectedTerritoryId: GoldSaucer.TerritoryId,
                 displayName: "Gold Saucer"),
 
+            new AethernetTeleportStep(
+                ctx.Lifestream,
+                ctx.ClientState,
+                ctx.Condition,
+                placeName: GoldSaucer.CactpotBoardAethernet),
+
+            // The aethernet shard is a few yalms from Lewena; a short walk
+            // covers the residual distance if vnavmesh has a mesh here.
             new WalkToStep(
                 ctx.Vnavmesh,
                 ctx.ClientState,

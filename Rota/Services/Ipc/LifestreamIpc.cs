@@ -22,6 +22,7 @@ public sealed class LifestreamIpc
     private ICallGateSubscriber<uint, object>? _teleport;
     private ICallGateSubscriber<bool>? _isBusy;
     private ICallGateSubscriber<string, object>? _executeCommand;
+    private ICallGateSubscriber<string, object>? _aethernetTeleport;
 
     public LifestreamIpc(IDalamudPluginInterface pi, IPluginLog log)
     {
@@ -69,6 +70,26 @@ public sealed class LifestreamIpc
         catch (Exception ex)
         {
             _log.Error(ex, "[Rota] Lifestream.ExecuteCommand('{0}') failed", command);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Aethernet-teleport to a named shard within the current zone (e.g.
+    /// "The Cactpot Board", "Wonder Square"). Requires the player to be near
+    /// an aethernet-linked aetheryte.
+    /// </summary>
+    public bool AethernetTeleport(string placeName)
+    {
+        try
+        {
+            _aethernetTeleport ??= _pi.GetIpcSubscriber<string, object>("Lifestream.AethernetTeleport");
+            _aethernetTeleport.InvokeAction(placeName);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "[Rota] Lifestream.AethernetTeleport('{0}') failed", placeName);
             return false;
         }
     }

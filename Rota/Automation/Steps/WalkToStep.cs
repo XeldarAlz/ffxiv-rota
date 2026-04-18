@@ -23,7 +23,15 @@ public sealed class WalkToStep : IStep
     private readonly TimeSpan _timeout;
 
     private DateTime _deadline;
+    private DateTime _graceUntil;
     private bool _invoked;
+    private bool _observedRunning;
+
+    // vnavmesh.SimpleMove.PathfindAndMoveTo returns immediately but the path
+    // subsystem takes a frame or two to mark itself running. We grant a short
+    // grace window after Start() during which "not running" is not interpreted
+    // as failure.
+    private static readonly TimeSpan StartGrace = TimeSpan.FromSeconds(4);
 
     public string Name { get; }
     public StepState State { get; private set; } = StepState.Idle;
@@ -60,7 +68,9 @@ public sealed class WalkToStep : IStep
     {
         if (_invoked) return;
         _invoked = true;
-        _deadline = DateTime.UtcNow + _timeout;
+        var now = DateTime.UtcNow;
+        _deadline = now + _timeout;
+        _graceUntil = now + StartGrace;
 
         if (IsWithinArrivalRadius())
         {
@@ -80,8 +90,9 @@ public sealed class WalkToStep : IStep
     public void Tick()
     {
         if (State != StepState.Running) return;
+        var now = DateTime.UtcNow;
 
-        if (DateTime.UtcNow > _deadline)
+        if (now > _deadline)
         {
             _vnav.StopPath();
             FailureReason = $"did not arrive at {_destination} within {_timeout.TotalSeconds:0}s";
@@ -96,8 +107,14 @@ public sealed class WalkToStep : IStep
             return;
         }
 
-        // If vnav reports it has stopped but we haven't arrived, it couldn't path.
-        if (!_vnav.IsPathRunning() && !IsWithinArrivalRadius())
+        var running = _vnav.IsPathRunning();
+        if (running) _observedRunning = true;
+
+        // Only treat "not running" as failure if:
+        //  (a) we're past the grace window, AND
+        //  (b) we observed running at least once (so the path was actually underway).
+        // Before either condition, the path is just warming up — keep polling.
+        if (!running && _observedRunning && now > _graceUntil)
         {
             FailureReason = "vnavmesh stopped before arrival — no path or blocked";
             State = StepState.Failed;

@@ -14,4 +14,7 @@ internal static class GoldSaucer
 
     /// <summary>Jumbo Cactpot NPC name — used as a fallback when BaseId isn't known.</summary>
     public const string LewenaName = "Lewena";
+
+    /// <summary>Lifestream aethernet shard name that puts you next to Lewena.</summary>
+    public const string CactpotBoardAethernet = "The Cactpot Board";
 }
