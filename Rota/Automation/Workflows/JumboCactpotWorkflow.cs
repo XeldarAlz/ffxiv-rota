@@ -50,18 +50,15 @@ public static class JumboCactpotWorkflow
                 displayName: "Purchase a ticket"),
 
             // Ticket UI: press Random to roll 4 digits, press Purchase, confirm.
-            // Addon name and callback cases are initial guesses — we iterate
-            // from test output (see task #17). Known unknowns:
-            //   - Addon name: "LotteryWeeklyInput" is the community-standard
-            //     guess. Fallbacks: "LotteryWeekly", "LotteryWeeklyRewardList".
-            //   - Random button case: guessed 1
-            //   - Purchase button case: guessed 0
+            // Purchase = case 0 (verified: ticket is issued with current digits).
+            // Random case is being searched live — case 1 produced no effect,
+            // trying case 2 next. Iterate in this file as we narrow it down.
             new AddonCallbackStep(
                 ctx.GameGui,
                 ctx.Log,
                 addonName: "LotteryWeeklyInput",
-                intArgs: [1],
-                displayName: "Random numbers"),
+                intArgs: [2],
+                displayName: "Random numbers (case=2)"),
 
             new AddonCallbackStep(
                 ctx.GameGui,
