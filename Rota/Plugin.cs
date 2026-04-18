@@ -50,6 +50,9 @@ public sealed class Plugin : IDalamudPlugin
         Objectives.Register(new WondrousTailsObjective(ClientState));
         Objectives.Register(new CustomDeliveriesObjective(ClientState));
         Objectives.Register(new PvPSeriesObjective(ClientState));
+        Objectives.Register(new BeastTribesObjective(ClientState, DataManager));
+        Objectives.Register(new JumboCactpotObjective(ClientState));
+        Objectives.Register(new FashionReportObjective(ClientState));
 
         MainWindow = new MainWindow(this);
         WindowSystem.AddWindow(MainWindow);
