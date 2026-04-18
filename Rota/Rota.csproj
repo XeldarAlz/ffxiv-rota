@@ -2,8 +2,8 @@
 <Project Sdk="Dalamud.NET.Sdk/14.0.2">
   <PropertyGroup>
     <Version>0.0.0.1</Version>
-    <Description>Daily Hub — daily/weekly content tracker and orchestrator for FFXIV.</Description>
-    <PackageProjectUrl>https://github.com/XeldarAlz/FFXIVPlugin</PackageProjectUrl>
+    <Description>Rota — daily/weekly content tracker and orchestrator for FFXIV.</Description>
+    <PackageProjectUrl>https://github.com/XeldarAlz/ffxiv-rota</PackageProjectUrl>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
