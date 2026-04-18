@@ -35,14 +35,14 @@ public sealed class DutyRouletteObjective : IObjective
     {
         if (!_clientState.IsLoggedIn) return new ObjectiveStatus(ObjectiveState.NotLoggedIn);
 
-        var ps = PlayerState.Instance();
-        if (ps is null) return new ObjectiveStatus(ObjectiveState.Unknown);
+        // Per CS's own docstring on PlayerState._contentRouletteCompletion:
+        // "Use InstanceContent.IsRouletteComplete(byte)." That method reads the
+        // underlying memory directly, bypassing the fixed-size public accessor
+        // (which lags behind when new roulettes are added).
+        var ic = FFXIVClientStructs.FFXIV.Client.Game.UI.InstanceContent.Instance();
+        if (ic is null) return new ObjectiveStatus(ObjectiveState.Unknown);
 
-        var buf = ps->ContentRouletteCompletion;
-        if (_completionIndex >= buf.Length)
-            return new ObjectiveStatus(ObjectiveState.Unavailable, "retired or not in active roulette set");
-
-        var done = buf[_completionIndex] != 0;
+        var done = ic->IsRouletteComplete(_completionIndex);
         return new ObjectiveStatus(done ? ObjectiveState.Completed : ObjectiveState.Pending);
     }
 }

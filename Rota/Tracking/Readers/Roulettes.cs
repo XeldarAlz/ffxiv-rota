@@ -32,6 +32,9 @@ public static class Roulettes
 
             registry.Register(obj);
             added++;
+
+            log.Debug("[Rota] roulette row={0} name='{1}' completionIndex={2}",
+                row.RowId, name, (int)row.CompletionArrayIndex);
         }
 
         log.Information("[Rota] Registered {0} duty roulette objectives.", added);
