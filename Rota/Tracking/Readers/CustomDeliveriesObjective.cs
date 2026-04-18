@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using Rota.Automation;
 
 namespace Rota.Tracking.Readers;
 
@@ -66,4 +67,6 @@ public sealed class CustomDeliveriesObjective : IObjective
             Current: used,
             Max: max);
     }
+
+    public Workflow? BuildWorkflow(WorkflowContext ctx) => null;
 }

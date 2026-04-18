@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using Rota.Automation;
 
 namespace Rota.Tracking.Readers;
 
@@ -45,4 +46,6 @@ public sealed class DutyRouletteObjective : IObjective
         var done = ic->IsRouletteComplete(_completionIndex);
         return new ObjectiveStatus(done ? ObjectiveState.Completed : ObjectiveState.Pending);
     }
+
+    public Workflow? BuildWorkflow(WorkflowContext ctx) => null;
 }

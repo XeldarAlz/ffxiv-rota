@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Dalamud.Plugin.Services;
+using Rota.Automation;
 
 namespace Rota.Tracking.Readers;
 
@@ -50,6 +51,8 @@ public sealed class FashionReportObjective : IObjective
         return new ObjectiveStatus(ObjectiveState.Pending,
             Detail: $"window closes in {FormatDelta(nextChange - now)}");
     }
+
+    public Workflow? BuildWorkflow(WorkflowContext ctx) => null;
 
     private static string FormatDelta(TimeSpan span)
     {

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using Rota.Automation;
 
 namespace Rota.Tracking.Readers;
 
@@ -59,4 +60,6 @@ public sealed class PvPSeriesObjective : IObjective
         return new ObjectiveStatus(ObjectiveState.Completed,
             Detail: $"rank {currentRank}, exp {exp}");
     }
+
+    public Workflow? BuildWorkflow(WorkflowContext ctx) => null;
 }

@@ -44,8 +44,13 @@ public interface IObjective
 
     /// <summary>
     /// Build an orchestrator workflow that completes this objective.
-    /// Return null if no workflow is wired — the UI will disable the Run button.
-    /// Default implementation returns null so readers don't have to opt out.
+    /// Return null when no workflow is wired — the UI disables the Run button.
+    ///
+    /// This is deliberately NOT a default interface method: C# DIMs are not
+    /// overridden by regular public methods on implementing classes (they
+    /// require explicit interface implementation), which produced silent
+    /// "button disabled even with a real override" bugs. Each class must
+    /// implement this explicitly; readers with no workflow return null.
     /// </summary>
-    Workflow? BuildWorkflow(WorkflowContext ctx) => null;
+    Workflow? BuildWorkflow(WorkflowContext ctx);
 }

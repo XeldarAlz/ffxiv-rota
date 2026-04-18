@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.Sheets;
+using Rota.Automation;
 
 namespace Rota.Tracking.Readers;
 
@@ -69,4 +70,6 @@ public sealed class BeastTribesObjective : IObjective
             Current: tribalAccepted,
             Max: 12);
     }
+
+    public Workflow? BuildWorkflow(WorkflowContext ctx) => null;
 }

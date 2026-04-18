@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using Rota.Automation;
 
 namespace Rota.Tracking.Readers;
 
@@ -61,4 +62,6 @@ public sealed class WondrousTailsObjective : IObjective
             Current: placed,
             Max: max);
     }
+
+    public Workflow? BuildWorkflow(WorkflowContext ctx) => null;
 }
