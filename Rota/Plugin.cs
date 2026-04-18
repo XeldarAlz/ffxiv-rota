@@ -54,7 +54,7 @@ public sealed class Plugin : IDalamudPlugin
             Condition = Condition,
             ObjectTable = ObjectTable,
             Log = Log,
-            Lifestream = new LifestreamIpc(PluginInterface, Log),
+            Lifestream = new LifestreamIpc(PluginInterface, CommandManager, Log),
             Vnavmesh = new VnavmeshIpc(PluginInterface, Log),
         };
 
