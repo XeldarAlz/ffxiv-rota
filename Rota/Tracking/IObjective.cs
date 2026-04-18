@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Rota.Automation;
 
 namespace Rota.Tracking;
 
@@ -40,4 +41,11 @@ public interface IObjective
     /// needs in order to be runnable. Empty = read-only objective with no Run action.
     /// </summary>
     IReadOnlyList<string> RequiredPlugins { get; }
+
+    /// <summary>
+    /// Build an orchestrator workflow that completes this objective.
+    /// Return null if no workflow is wired — the UI will disable the Run button.
+    /// Default implementation returns null so readers don't have to opt out.
+    /// </summary>
+    Workflow? BuildWorkflow(WorkflowContext ctx) => null;
 }

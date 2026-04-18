@@ -5,6 +5,7 @@ using Dalamud.Plugin.Services;
 using Dalamud.Interface.Windowing;
 using Rota.Automation;
 using Rota.Services;
+using Rota.Services.Ipc;
 using Rota.Tracking;
 using Rota.Tracking.Readers;
 using Rota.Windows;
@@ -34,6 +35,7 @@ public sealed class Plugin : IDalamudPlugin
     public IpcRegistry Ipc { get; }
     public ObjectiveRegistry Objectives { get; }
     public WorkflowRunner Runner { get; }
+    public WorkflowContext Workflows { get; }
 
     public readonly WindowSystem WindowSystem = new("Rota");
     private MainWindow MainWindow { get; }
@@ -45,6 +47,16 @@ public sealed class Plugin : IDalamudPlugin
         Ipc = new IpcRegistry(PluginInterface, Log);
         Objectives = new ObjectiveRegistry();
         Runner = new WorkflowRunner(Framework, Log);
+
+        Workflows = new WorkflowContext
+        {
+            ClientState = ClientState,
+            Condition = Condition,
+            ObjectTable = ObjectTable,
+            Log = Log,
+            Lifestream = new LifestreamIpc(PluginInterface, Log),
+            Vnavmesh = new VnavmeshIpc(PluginInterface, Log),
+        };
 
         Roulettes.RegisterAll(Objectives, DataManager, ClientState, Log);
         Objectives.Register(new WondrousTailsObjective(ClientState));

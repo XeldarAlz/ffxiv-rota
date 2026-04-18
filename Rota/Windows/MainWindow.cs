@@ -118,12 +118,17 @@ public sealed class MainWindow : Window, IDisposable
             }
             else
             {
-                if (!canRun) ImGui.BeginDisabled();
-                if (ImGui.Button("Run"))
+                var wf = obj.BuildWorkflow(_plugin.Workflows);
+                var runnable = canRun && wf is not null;
+                if (!runnable) ImGui.BeginDisabled();
+                if (ImGui.Button("Run") && wf is not null)
                 {
-                    // TODO: resolve workflow for obj.Id and hand to runner
+                    if (!_plugin.Runner.TryStart(wf, out var reason))
+                        Plugin.Log.Warning("[Rota] Could not start workflow '{0}': {1}", wf.Name, reason ?? "?");
                 }
-                if (!canRun) ImGui.EndDisabled();
+                if (!runnable) ImGui.EndDisabled();
+                if (wf is null && ImGui.IsItemHovered())
+                    ImGui.SetTooltip("No workflow wired for this objective yet.");
             }
         }
 

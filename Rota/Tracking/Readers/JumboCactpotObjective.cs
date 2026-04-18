@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using Dalamud.Plugin.Services;
+using Rota.Automation;
+using Rota.Automation.Workflows;
 
 namespace Rota.Tracking.Readers;
 
@@ -40,4 +42,6 @@ public sealed class JumboCactpotObjective : IObjective
         return new ObjectiveStatus(ObjectiveState.Pending,
             "passive read unavailable — open Cactpot board to confirm 0/3 tickets");
     }
+
+    public Workflow BuildWorkflow(WorkflowContext ctx) => JumboCactpotWorkflow.Build(ctx);
 }
