@@ -39,7 +39,8 @@ public sealed class DutyRouletteObjective : IObjective
         if (ps is null) return new ObjectiveStatus(ObjectiveState.Unknown);
 
         var buf = ps->ContentRouletteCompletion;
-        if (_completionIndex >= buf.Length) return new ObjectiveStatus(ObjectiveState.Unknown);
+        if (_completionIndex >= buf.Length)
+            return new ObjectiveStatus(ObjectiveState.Unavailable, "retired or not in active roulette set");
 
         var done = buf[_completionIndex] != 0;
         return new ObjectiveStatus(done ? ObjectiveState.Completed : ObjectiveState.Pending);
