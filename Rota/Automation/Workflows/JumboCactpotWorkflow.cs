@@ -43,14 +43,35 @@ public static class JumboCactpotWorkflow
                 searchRadius: 60f),
 
             // Broker's first menu option is "I'd like to purchase a ticket."
-            // Picking index 0 opens the LotteryWeekly addon (ticket number
-            // selection UI). Ticket-number randomize + confirm chain is a
-            // later commit — see task #17.
             new SelectStringStep(
                 ctx.GameGui,
                 ctx.Log,
                 optionIndex: 0,
                 displayName: "Purchase a ticket"),
+
+            // Ticket UI: press Random to roll 4 digits, press Purchase, confirm.
+            // Addon name and callback cases are initial guesses — we iterate
+            // from test output (see task #17). Known unknowns:
+            //   - Addon name: "LotteryWeeklyInput" is the community-standard
+            //     guess. Fallbacks: "LotteryWeekly", "LotteryWeeklyRewardList".
+            //   - Random button case: guessed 1
+            //   - Purchase button case: guessed 0
+            new AddonCallbackStep(
+                ctx.GameGui,
+                ctx.Log,
+                addonName: "LotteryWeeklyInput",
+                intArgs: [1],
+                displayName: "Random numbers"),
+
+            new AddonCallbackStep(
+                ctx.GameGui,
+                ctx.Log,
+                addonName: "LotteryWeeklyInput",
+                intArgs: [0],
+                displayName: "Purchase"),
+
+            // Confirm "Purchase this ticket for N MGP?" — standard SelectYesno.
+            new SelectYesnoStep(ctx.GameGui, ctx.Log, clickYes: true),
         ],
     };
 }
