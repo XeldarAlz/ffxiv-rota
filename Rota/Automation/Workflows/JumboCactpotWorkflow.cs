@@ -41,6 +41,16 @@ public static class JumboCactpotWorkflow
                 nameContains: GoldSaucer.JumboCactpotBrokerName,
                 displayName: GoldSaucer.JumboCactpotBrokerName,
                 searchRadius: 60f),
+
+            // Broker's first menu option is "I'd like to purchase a ticket."
+            // Picking index 0 opens the LotteryWeekly addon (ticket number
+            // selection UI). Ticket-number randomize + confirm chain is a
+            // later commit — see task #17.
+            new SelectStringStep(
+                ctx.GameGui,
+                ctx.Log,
+                optionIndex: 0,
+                displayName: "Purchase a ticket"),
         ],
     };
 }

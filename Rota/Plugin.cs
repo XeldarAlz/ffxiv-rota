@@ -53,6 +53,7 @@ public sealed class Plugin : IDalamudPlugin
             ClientState = ClientState,
             Condition = Condition,
             ObjectTable = ObjectTable,
+            GameGui = GameGui,
             Log = Log,
             Lifestream = new LifestreamIpc(PluginInterface, CommandManager, Log),
             Vnavmesh = new VnavmeshIpc(PluginInterface, Log),

@@ -13,6 +13,7 @@ public sealed class WorkflowContext
     public required IClientState ClientState { get; init; }
     public required ICondition Condition { get; init; }
     public required IObjectTable ObjectTable { get; init; }
+    public required IGameGui GameGui { get; init; }
     public required IPluginLog Log { get; init; }
 
     public required LifestreamIpc Lifestream { get; init; }
