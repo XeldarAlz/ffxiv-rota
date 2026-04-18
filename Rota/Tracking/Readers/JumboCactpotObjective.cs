@@ -26,9 +26,10 @@ public sealed class JumboCactpotObjective : IObjective
     public ObjectiveCadence Cadence => ObjectiveCadence.Weekly;
 
     // Intra-world aetheryte teleport uses the game's native Telepo (no IPC).
-    // Aethernet hop to the Cactpot Board shard uses Lifestream, and the short
-    // walk from the shard to Lewena uses vnavmesh.
-    public IReadOnlyList<string> RequiredPlugins { get; } = new[] { "Lifestream", "vnavmesh" };
+    // Walking from the Gold Saucer main aetheryte to the Jumbo Cactpot Broker
+    // uses vnavmesh. Lifestream is not currently required — add it back when
+    // we wire a correct aethernet shortcut.
+    public IReadOnlyList<string> RequiredPlugins { get; } = new[] { "vnavmesh" };
 
     public JumboCactpotObjective(IClientState clientState)
     {

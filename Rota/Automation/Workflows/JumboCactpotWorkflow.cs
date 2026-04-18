@@ -28,22 +28,19 @@ public static class JumboCactpotWorkflow
                 expectedTerritoryId: GoldSaucer.TerritoryId,
                 displayName: "Gold Saucer"),
 
-            new AethernetTeleportStep(
-                ctx.Lifestream,
-                ctx.ClientState,
-                ctx.Condition,
-                placeName: GoldSaucer.CactpotBoardAethernet),
-
-            // Composite: find Lewena by name in the ObjectTable, vnav to her
-            // runtime position, then interact. Replaces the old static walk +
-            // fixed-coord interact which was fragile to aethernet drop drift.
+            // No aethernet hop — the Jumbo Cactpot Broker is a short walk
+            // (~20y) from the main Gold Saucer aetheryte, and the correct
+            // aethernet shard name is not known yet. InteractWithNpcStep
+            // searches a 60-yalm radius and vnav-pathfinds to the runtime
+            // position, which comfortably covers the distance.
             new InteractWithNpcStep(
                 ctx.ClientState,
                 ctx.ObjectTable,
                 ctx.Vnavmesh,
                 baseId: null,
                 nameContains: GoldSaucer.JumboCactpotBrokerName,
-                displayName: GoldSaucer.JumboCactpotBrokerName),
+                displayName: GoldSaucer.JumboCactpotBrokerName,
+                searchRadius: 60f),
         ],
     };
 }
