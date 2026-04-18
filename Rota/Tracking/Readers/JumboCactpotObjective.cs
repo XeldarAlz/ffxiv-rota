@@ -25,7 +25,10 @@ public sealed class JumboCactpotObjective : IObjective
     public string Category => "Weekly";
     public ObjectiveCadence Cadence => ObjectiveCadence.Weekly;
 
-    public IReadOnlyList<string> RequiredPlugins { get; } = new[] { "Lifestream" };
+    // Intra-world aetheryte teleport uses the game's native Telepo (no IPC),
+    // so the only orchestrator plugin this workflow needs is vnavmesh to walk
+    // from the Gold Saucer entrance to Lewena.
+    public IReadOnlyList<string> RequiredPlugins { get; } = new[] { "vnavmesh" };
 
     public JumboCactpotObjective(IClientState clientState)
     {

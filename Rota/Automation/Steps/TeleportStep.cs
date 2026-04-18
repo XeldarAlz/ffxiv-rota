@@ -1,24 +1,29 @@
 using System;
 using Dalamud.Plugin.Services;
-using Rota.Services.Ipc;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 
 namespace Rota.Automation.Steps;
 
 /// <summary>
-/// Teleport to a world-map aetheryte via Lifestream IPC, then wait until the
-/// territory change completes and the player is controllable again.
+/// Teleport to a world-map aetheryte using the game's native Telepo struct —
+/// the exact same code path as pressing "Teleport" in the Aetheryte menu.
 ///
-/// Step states:
-///   - Running while Lifestream.IsBusy() returns true or we haven't arrived
-///   - Completed once the expected territory is loaded and the player is idle
-///   - Fails if Lifestream isn't reachable, or after a hard timeout
+/// Does NOT use Lifestream because Lifestream's public IPC only covers aethernet
+/// shards and cross-world visits, not simple intra-world aetheryte teleports.
+/// For cross-DC work we will layer Lifestream on top in a separate step.
+///
+/// Flow:
+///   Start() -> Telepo.Teleport(aetheryteId, subIndex)
+///   Tick() polls until:
+///     territory == expected && not Casting && not BetweenAreas -> Completed
+///     deadline exceeded                                        -> Failed
 /// </summary>
 public sealed class TeleportStep : IStep
 {
-    private readonly LifestreamIpc _lifestream;
     private readonly IClientState _clientState;
     private readonly ICondition _condition;
     private readonly uint _aetheryteId;
+    private readonly byte _subIndex;
     private readonly uint _expectedTerritoryId;
     private readonly TimeSpan _timeout;
 
@@ -30,18 +35,18 @@ public sealed class TeleportStep : IStep
     public string? FailureReason { get; private set; }
 
     public TeleportStep(
-        LifestreamIpc lifestream,
         IClientState clientState,
         ICondition condition,
         uint aetheryteId,
         uint expectedTerritoryId,
         string displayName,
+        byte subIndex = 0,
         TimeSpan? timeout = null)
     {
-        _lifestream = lifestream;
         _clientState = clientState;
         _condition = condition;
         _aetheryteId = aetheryteId;
+        _subIndex = subIndex;
         _expectedTerritoryId = expectedTerritoryId;
         _timeout = timeout ?? TimeSpan.FromSeconds(60);
         Name = $"Teleport: {displayName}";
@@ -52,29 +57,43 @@ public sealed class TeleportStep : IStep
         if (!_clientState.IsLoggedIn) { reason = "not logged in"; return false; }
         if (_condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat])
         { reason = "in combat"; return false; }
+        if (_condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Casting])
+        { reason = "already casting"; return false; }
+        if (_condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty])
+        { reason = "bound by duty"; return false; }
         reason = null;
         return true;
     }
 
-    public void Start()
+    public unsafe void Start()
     {
         if (_invoked) return;
         _invoked = true;
         _deadline = DateTime.UtcNow + _timeout;
 
-        // Short-circuit: we are already in the target zone and idle.
-        if (_clientState.TerritoryType == _expectedTerritoryId && !_lifestream.IsBusy())
+        // Short-circuit: already at target zone and idle.
+        if (_clientState.TerritoryType == _expectedTerritoryId && IsIdle())
         {
             State = StepState.Completed;
             return;
         }
 
-        if (!_lifestream.Teleport(_aetheryteId))
+        var telepo = Telepo.Instance();
+        if (telepo is null)
         {
-            FailureReason = "Lifestream.Teleport IPC failed";
+            FailureReason = "Telepo.Instance() returned null";
             State = StepState.Failed;
             return;
         }
+
+        var ok = telepo->Teleport(_aetheryteId, _subIndex);
+        if (!ok)
+        {
+            FailureReason = $"Telepo.Teleport({_aetheryteId}, {_subIndex}) returned false — aetheryte unlocked? enough gil?";
+            State = StepState.Failed;
+            return;
+        }
+
         State = StepState.Running;
     }
 
@@ -90,9 +109,7 @@ public sealed class TeleportStep : IStep
         }
 
         if (_clientState.TerritoryType != _expectedTerritoryId) return;
-        if (_lifestream.IsBusy()) return;
-        if (_condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return;
-        if (_condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas51]) return;
+        if (!IsIdle()) return;
 
         State = StepState.Completed;
     }
@@ -100,5 +117,13 @@ public sealed class TeleportStep : IStep
     public void Cancel()
     {
         if (State == StepState.Running) State = StepState.Cancelled;
+    }
+
+    private bool IsIdle()
+    {
+        if (_condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Casting]) return false;
+        if (_condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return false;
+        if (_condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas51]) return false;
+        return true;
     }
 }

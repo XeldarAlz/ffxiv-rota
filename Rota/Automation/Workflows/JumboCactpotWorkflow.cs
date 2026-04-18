@@ -22,7 +22,6 @@ public static class JumboCactpotWorkflow
         Steps =
         [
             new TeleportStep(
-                ctx.Lifestream,
                 ctx.ClientState,
                 ctx.Condition,
                 aetheryteId: GoldSaucer.AetheryteId,
