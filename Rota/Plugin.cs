@@ -48,6 +48,7 @@ public sealed class Plugin : IDalamudPlugin
 
         Roulettes.RegisterAll(Objectives, DataManager, ClientState, Log);
         Objectives.Register(new WondrousTailsObjective(ClientState));
+        Objectives.Register(new CustomDeliveriesObjective(ClientState));
 
         MainWindow = new MainWindow(this);
         WindowSystem.AddWindow(MainWindow);
