@@ -1,33 +1,45 @@
 using System;
 using System.Linq;
+using System.Numerics;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using Rota.Services.Ipc;
 
 namespace Rota.Automation.Steps;
 
 /// <summary>
-/// Find an NPC in the current ObjectTable and interact with it, triggering the
-/// in-game conversation or vendor window as if the player pressed the interact
-/// key. Identifies the NPC by DataId when provided, falling back to the nearest
-/// EventNpc whose name contains <see cref="_nameContains"/> (case-insensitive)
-/// within <see cref="_searchRadius"/> yalms.
+/// Find an NPC in the current ObjectTable, walk to it if necessary, and then
+/// interact with it. Preferred over composing WalkToStep + InteractWithNpcStep
+/// because the player's exact arrival coord from an aethernet hop drifts a
+/// few yalms between runs — we never want to walk to a stale hard-coded Vec3
+/// when the runtime position is right there in the ObjectTable.
 ///
-/// This step does NOT move the player — combine with WalkToStep first so the
-/// NPC is within interact range (~5 yalms).
+/// Flow:
+///   Start()
+///     find NPC by BaseId (if provided) or by name within searchRadius
+///     if already within interactDistance -> interact, Completed
+///     else if vnav is provided -> pathfind to target, poll until close, interact
+///     else -> Failed (no vnav, too far)
 /// </summary>
 public sealed class InteractWithNpcStep : IStep
 {
     private readonly IClientState _clientState;
     private readonly IObjectTable _objectTable;
-    private readonly uint? _dataId;
+    private readonly VnavmeshIpc? _vnav;
+    private readonly uint? _baseId;
     private readonly string? _nameContains;
     private readonly float _searchRadius;
+    private readonly float _interactDistance;
     private readonly TimeSpan _timeout;
 
+    private Dalamud.Game.ClientState.Objects.Types.IGameObject? _target;
     private DateTime _deadline;
+    private DateTime _graceUntil;
     private bool _invoked;
-    private bool _invokedInteract;
+    private bool _observedRunning;
+
+    private static readonly TimeSpan StartGrace = TimeSpan.FromSeconds(4);
 
     public string Name { get; }
     public StepState State { get; private set; } = StepState.Idle;
@@ -36,18 +48,22 @@ public sealed class InteractWithNpcStep : IStep
     public InteractWithNpcStep(
         IClientState clientState,
         IObjectTable objectTable,
-        uint? dataId,
+        VnavmeshIpc? vnav,
+        uint? baseId,
         string? nameContains,
         string displayName,
-        float searchRadius = 6f,
+        float searchRadius = 30f,
+        float interactDistance = 4.0f,
         TimeSpan? timeout = null)
     {
         _clientState = clientState;
         _objectTable = objectTable;
-        _dataId = dataId;
+        _vnav = vnav;
+        _baseId = baseId;
         _nameContains = nameContains;
         _searchRadius = searchRadius;
-        _timeout = timeout ?? TimeSpan.FromSeconds(10);
+        _interactDistance = interactDistance;
+        _timeout = timeout ?? TimeSpan.FromSeconds(60);
         Name = $"Interact with: {displayName}";
     }
 
@@ -63,16 +79,87 @@ public sealed class InteractWithNpcStep : IStep
     {
         if (_invoked) return;
         _invoked = true;
-        _deadline = DateTime.UtcNow + _timeout;
+        var now = DateTime.UtcNow;
+        _deadline = now + _timeout;
+        _graceUntil = now + StartGrace;
 
-        var target = FindNpc();
-        if (target is null)
+        _target = FindNpc();
+        if (_target is null)
         {
-            FailureReason = "target NPC not found within range";
+            FailureReason = $"target NPC not found within {_searchRadius:0} yalms";
             State = StepState.Failed;
             return;
         }
 
+        if (IsWithinInteract())
+        {
+            DispatchInteract();
+            return;
+        }
+
+        if (_vnav is null)
+        {
+            FailureReason = $"target is {Distance():0.0} yalms away and no vnav was supplied to close the gap";
+            State = StepState.Failed;
+            return;
+        }
+
+        if (!_vnav.PathfindAndMoveTo(_target.Position, fly: false))
+        {
+            FailureReason = "vnavmesh.PathfindAndMoveTo IPC failed";
+            State = StepState.Failed;
+            return;
+        }
+
+        State = StepState.Running;
+    }
+
+    public void Tick()
+    {
+        if (State != StepState.Running) return;
+        var now = DateTime.UtcNow;
+
+        if (now > _deadline)
+        {
+            _vnav?.StopPath();
+            FailureReason = "timed out approaching NPC";
+            State = StepState.Failed;
+            return;
+        }
+
+        // We re-resolve the target here because the ObjectTable occasionally
+        // respawns the object when crossing invisible subzone boundaries; the
+        // original reference becomes stale.
+        _target ??= FindNpc();
+        if (_target is null) return;
+
+        if (IsWithinInteract())
+        {
+            _vnav?.StopPath();
+            DispatchInteract();
+            return;
+        }
+
+        // Standard "vnav stopped before arrival" diagnostic, same pattern as
+        // WalkToStep (grace window + observedRunning latch).
+        if (_vnav is null) return;
+        var running = _vnav.IsPathRunning();
+        if (running) _observedRunning = true;
+        if (!running && _observedRunning && now > _graceUntil)
+        {
+            FailureReason = "vnavmesh stopped before reaching NPC — no path or blocked";
+            State = StepState.Failed;
+        }
+    }
+
+    public void Cancel()
+    {
+        _vnav?.StopPath();
+        if (State == StepState.Running) State = StepState.Cancelled;
+    }
+
+    private unsafe void DispatchInteract()
+    {
         var ts = TargetSystem.Instance();
         if (ts is null)
         {
@@ -80,45 +167,27 @@ public sealed class InteractWithNpcStep : IStep
             State = StepState.Failed;
             return;
         }
-
-        var go = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)target.Address;
+        var go = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)_target!.Address;
         ts->InteractWithObject(go);
-        _invokedInteract = true;
-        State = StepState.Running;
+        State = StepState.Completed;
     }
 
-    public void Tick()
+    private float Distance()
     {
-        if (State != StepState.Running) return;
-
-        // We consider the step complete as soon as the interact call has been
-        // made — the game drives the dialog state after that. If the player
-        // wants post-dialog handling, chain another step.
-        if (_invokedInteract)
-        {
-            State = StepState.Completed;
-            return;
-        }
-
-        if (DateTime.UtcNow > _deadline)
-        {
-            FailureReason = "interact never dispatched";
-            State = StepState.Failed;
-        }
+        var me = _objectTable.LocalPlayer;
+        if (me is null || _target is null) return float.MaxValue;
+        return Vector3.Distance(me.Position, _target.Position);
     }
 
-    public void Cancel()
-    {
-        if (State == StepState.Running) State = StepState.Cancelled;
-    }
+    private bool IsWithinInteract() =>
+        Distance() <= _interactDistance;
 
     private Dalamud.Game.ClientState.Objects.Types.IGameObject? FindNpc()
     {
         var me = _objectTable.LocalPlayer;
         if (me is null) return null;
 
-        // Prefer exact BaseId (formerly DataId) match.
-        if (_dataId is { } id)
+        if (_baseId is { } id)
         {
             var byId = _objectTable.FirstOrDefault(o =>
                 o is not null
@@ -127,7 +196,6 @@ public sealed class InteractWithNpcStep : IStep
             if (byId is not null) return byId;
         }
 
-        // Fallback: nearest EventNpc whose name matches.
         if (_nameContains is { Length: > 0 })
         {
             return _objectTable

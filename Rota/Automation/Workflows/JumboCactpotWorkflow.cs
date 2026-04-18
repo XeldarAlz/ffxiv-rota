@@ -34,22 +34,16 @@ public static class JumboCactpotWorkflow
                 ctx.Condition,
                 placeName: GoldSaucer.CactpotBoardAethernet),
 
-            // The aethernet shard is a few yalms from Lewena; a short walk
-            // covers the residual distance if vnavmesh has a mesh here.
-            new WalkToStep(
-                ctx.Vnavmesh,
-                ctx.ClientState,
-                ctx.ObjectTable,
-                destination: GoldSaucer.LewenaPosition,
-                displayName: GoldSaucer.LewenaName,
-                arrivalRadius: 4.5f),
-
+            // Composite: find Lewena by name in the ObjectTable, vnav to her
+            // runtime position, then interact. Replaces the old static walk +
+            // fixed-coord interact which was fragile to aethernet drop drift.
             new InteractWithNpcStep(
                 ctx.ClientState,
                 ctx.ObjectTable,
-                dataId: null,
-                nameContains: GoldSaucer.LewenaName,
-                displayName: GoldSaucer.LewenaName),
+                ctx.Vnavmesh,
+                baseId: null,
+                nameContains: GoldSaucer.JumboCactpotBrokerName,
+                displayName: GoldSaucer.JumboCactpotBrokerName),
         ],
     };
 }
