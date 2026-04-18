@@ -30,6 +30,7 @@ public sealed class Plugin : IDalamudPlugin
 
     private const string MainCommand = "/rota";
     private const string ShortCommand = "/rt";
+    private const string DumpCommand = "/rota-dump";
 
     public Configuration Configuration { get; }
     public IpcRegistry Ipc { get; }
@@ -84,6 +85,11 @@ public sealed class Plugin : IDalamudPlugin
             HelpMessage = "Alias for /rota.",
             ShowInHelp = false,
         });
+        CommandManager.AddHandler(DumpCommand, new CommandInfo(OnDumpCommand)
+        {
+            HelpMessage = "Dump an addon's AtkValues to /xllog. Usage: /rota-dump LotteryWeeklyInput",
+            ShowInHelp = false,
+        });
 
         Log.Information("Rota loaded.");
     }
@@ -92,6 +98,7 @@ public sealed class Plugin : IDalamudPlugin
     {
         CommandManager.RemoveHandler(MainCommand);
         CommandManager.RemoveHandler(ShortCommand);
+        CommandManager.RemoveHandler(DumpCommand);
 
         PluginInterface.UiBuilder.Draw -= WindowSystem.Draw;
         PluginInterface.UiBuilder.OpenMainUi -= ToggleMainUi;
@@ -105,6 +112,18 @@ public sealed class Plugin : IDalamudPlugin
     }
 
     private void OnCommand(string command, string args) => ToggleMainUi();
+
+    private void OnDumpCommand(string command, string args)
+    {
+        var name = args.Trim();
+        if (string.IsNullOrEmpty(name))
+        {
+            ChatGui.Print("Usage: /rota-dump <AddonName>  (e.g. /rota-dump LotteryWeeklyInput)");
+            return;
+        }
+        Services.AddonDiagnostics.DumpAtkValues(GameGui, Log, name);
+        ChatGui.Print($"Dumped addon '{name}' — see /xllog [Rota][diag].");
+    }
 
     public void ToggleMainUi() => MainWindow.Toggle();
 }
